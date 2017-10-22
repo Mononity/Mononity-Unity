@@ -1,59 +1,79 @@
-﻿/*********************
+﻿
+/*********************
  * Mononity
- * Ver : 1.0 
- * Date : 2017.10.07
+ * Ver : 1.1 
+ * Date : 2017.10.22
 *********************/
 
 using System;
+using System.IO;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using Mononity.Messages;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Mononity
 {
 	public class MononityClient
 	{
-		private readonly string _token;
-
-		public MononityClient (string token)
+		// Mononity Client
+		public MononityClient ()
 		{
-			//Console.WriteLine ("Mononity Client Create");
-			//Console.WriteLine (token);
-			//print ("Mononity Client Create");
-			//print (token);
-			_token = token;
+			Console.WriteLine ("Mononity Client Create");
 		}
 
-		public void SendMessage(string message){
-			MononityInfoMessage mononityInfoMessage = new MononityInfoMessage ();
-			Byte[] data = StringToAscii(mononityInfoMessage.returnJson ());
-			Dictionary<string, string> headers = new Dictionary<string, string>();
-			headers["X-ApiKey"] = _token;
-			new WWW ("http://210.94.194.82:9981/thingplug/sub", data, headers);
-			//Console.WriteLine (mononityInfoMessage);
-			//print (mononityInfoMessage);
+		// SendMessage to Server
+		// Usage : StartCoroutine(mononityClient.SendMessage());
+		public IEnumerator SendMessage(){
+			//string url = "http://127.0.0.1:9147/thingplug/sub";
+			string url = "http://210.94.194.82:9147/thingplug/sub";
+
+			MononityMessage monoMessage = new MononityMessage ();
+			byte[] data = Encoding.UTF8.GetBytes (monoMessage.returnJson ().ToCharArray());
+	
+			Hashtable header = new Hashtable();
+			header.Add("Content-Type", "text/json");
+			//header.Add("Content-Length", data.Length.ToString());
+
+			WWW www = new WWW(url, data, header);
+
+			yield return www;
+			if (www.isDone && www.error == null)
+			{
+				Debug.Log("www Result: " + www.text);
+			}
+			else
+			{
+				Debug.Log("error : " + www.error);
+			}
+			/*
+			WWWForm form = new WWWForm ();
+			form.AddField ("header", header.returnJson());
+			//form.AddField ("header", "TEST");
+			form.AddField ("data", "NULL");
+
+			UnityWebRequest www = UnityWebRequest.Post (url, form);
+			yield return www.Send ();
+
+			if(www.isNetworkError || www.isHttpError) {
+				//Debug.Log(www.error);
+				Debug.Log("Error");
+			}
+			else {
+				Debug.Log("Form upload complete!");
+			}
+			*/
 		}
 
 		// for create test
-		public string isPossible(){
-			MononityInfoMessage mononityInfoMessage = new MononityInfoMessage ();
-			string jsonValue = mononityInfoMessage.returnJson ();
-			MononityInfoMessage dataFromJson = JsonUtility.FromJson<MononityInfoMessage> (jsonValue);
-			return dataFromJson.DeviceModel;
-			//return mononityInfoMessage.DeviceModel;
-			//return _token;
-		}
-
-		private static byte[] StringToAscii(string s)
-		{
-			byte[] retval = new byte[s.Length];
-			for (int i = 0; i < s.Length; i++)
-			{
-				char ch = s[i];
-				retval[i] = ch <= 0x7f ? (byte)ch : (byte)'?';
-			}
-			return retval;
+		public string StackTrace(){
+			string filepath = Application.persistentDataPath + "/StackTest.txt";
+			string stackdata = System.DateTime.Now.ToString ("yyyy/MM/dd HH:mm:ss\n") + System.Environment.StackTrace;
+			Debug.Log(System.Environment.StackTrace);
+			System.IO.File.WriteAllText (filepath, stackdata);
+			return System.Environment.StackTrace;
 		}
 	}
 }
