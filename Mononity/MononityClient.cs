@@ -1,8 +1,8 @@
 ﻿
 /*********************
  * Mononity
- * Ver : 1.1 
- * Date : 2017.10.22
+ * Ver : 1.2 
+ * Date : 2017.11.13
 *********************/
 
 using System;
@@ -19,8 +19,11 @@ namespace Mononity
 	public class MononityClient
 	{
 		// Mononity Client
+		private static DateTime stackTime = DateTime.Now;
+
 		public MononityClient ()
 		{
+			stackTime = DateTime.Now;
 			Console.WriteLine ("Mononity Client Create");
 		}
 
@@ -68,12 +71,16 @@ namespace Mononity
 		}
 
 		// for create test
-		public string StackTrace(){
-			string filepath = Application.persistentDataPath + "/StackTest.txt";
-			string stackdata = System.DateTime.Now.ToString ("yyyy/MM/dd HH:mm:ss\n") + System.Environment.StackTrace;
-			Debug.Log(System.Environment.StackTrace);
-			System.IO.File.WriteAllText (filepath, stackdata);
-			return System.Environment.StackTrace;
+		public static void StackTrace(){
+			DateTime currentTime = DateTime.Now;
+			if(currentTime.Subtract(stackTime).Seconds >= 5){
+				stackTime = currentTime;
+				string filename = stackTime.ToString("Stack-yyyy-MM-dd-HH:mm:ss");
+				string filepath = Application.persistentDataPath + "/" + filename +".txt";
+				string stackdata = System.DateTime.Now.ToString ("yyyy/MM/dd HH:mm:ss\n") + System.Environment.StackTrace;
+				Debug.Log(System.Environment.StackTrace);
+				System.IO.File.WriteAllText (filepath, stackdata);
+			}
 		}
 	}
 }
