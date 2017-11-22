@@ -1,10 +1,9 @@
 ﻿
 /*********************
  * Mononity
- * Ver : 1.2 
- * Date : 2017.11.13
+ * Ver : 1.3 
+ * Date : 2017.11.20
 *********************/
-
 
 using System;
 using System.Threading;
@@ -20,8 +19,7 @@ namespace Mononity
 		public Timer mononityTimer;
 
 		// SINGLETON
-		public static AndroidJavaClass mononityPlugin;
-
+		public static MononityAndroid mononityAndroid = null;
 		public static MononityAgent instance;
 
 		public void OnApplicationQuit() {		// Ensure that the instance is destroyed when the game is stopped in the editor.			
@@ -31,7 +29,7 @@ namespace Mononity
 
 		public void Awake() 
 		{
-			//Debug.Log ("MonoAgent Awake");
+			UnityEngine.Debug.Log ("MonoAgent Awake");
 			if (instance != null){
 				Destroy (gameObject);
 			}else{
@@ -42,44 +40,44 @@ namespace Mononity
 
 		public void OnEnable()
 		{
-			//Debug.Log ("MonoAgent OnEnable");
+			UnityEngine.Debug.Log ("MonoAgent OnEnable");
+			//Application.logMessageReceived += MononityHander;
 		}
+
+		/*
+		public void OnDisable()
+		{
+			//Application.logMessageReceived -= MononityHander;
+		}
+
+		void MononityHander(string logString, string stackTrace, LogType type)
+		{
+			//string filepath = Application.persistentDataPath + "/CrashReport" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
+			//System.IO.File.WriteAllText(filepath, logString + "\r\n" + stackTrace);
+			if (type == LogType.Exception) {
+				string filepath = Application.persistentDataPath + "/CrashReport" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
+				System.IO.File.WriteAllText(filepath, stackTrace);
+			}
+		}
+		*/
 
 		public void Start()
 		{
-			//Debug.Log ("MonoAgent Start");
-			mononityPlugin = new AndroidJavaClass("com.test.unityplugin.PluginClass");
+			mononityAndroid = new MononityAndroid ();
+			UnityEngine.Debug.Log ("MonoAgent Start");
+			//mononityPlugin = new AndroidJavaClass("com.test.unityplugin.PluginClass");
 
-			//monoTimer = new Timer(Printing, "Hello", 1000, 5000);
-			//mononityTimer = new Timer(GetData, "", 1000, 5000);
+			mononityTimer = new Timer(GetData, "", 1000, 5000);
 			//mononityTimer = new Timer(GetFullStack, "", 1000, 5000);
-			mononityTimer = new Timer(SceneDump, "", 1000, 5000); // Dump Full Scenes
+			//mononityTimer = new Timer(SceneDump, "", 1000, 5000); // Dump Full Scenes
 		}
 
-		public static void Printing (object data){
-			//Debug.Log (data);
-		}
 
 		public static void GetData (object data){
-			/*
-			string getmemoryallocated = mononityPlugin.CallStatic<string>("GetMemoryAllocated");
-			string Androidcallstack = mononityPlugin.CallStatic<string>("GetCallStack");
-			string getcpuusage = mononityPlugin.CallStatic<string>("GetCpuUsagePercentage");
-			string getcurrentthreadname = mononityPlugin.CallStatic<string>("getCurrentThreadName");
-
-			string Unitycallstack = System.Environment.StackTrace;
-
-			string log = "GetMemoryAllocated : " + getmemoryallocated + "\n\n" +
-				"CallUnityStack : " + Unitycallstack + "\n\n"+
-				"CallAndroidStack : " + Androidcallstack + "\n\n" +
-				"GetcpuUsage : " + getcpuusage + "\n\n" +
-				"GetcurrentThreadname : " + getcurrentthreadname + "\n\n";
-		
-			string filepath = Application.persistentDataPath + "/temp" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
-			System.IO.File.WriteAllText(filepath, log);
-			*/
-			string filepath = Application.persistentDataPath + "/temp" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
-			System.IO.File.WriteAllText(filepath, System.Environment.StackTrace);
+			string filedata = mononityAndroid.returnData ();
+			string filepath = Application.persistentDataPath + "/ProfileData" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
+			System.IO.File.WriteAllText(filepath, filedata);
+			//(new AndroidJavaClass("com.test.unityplugin.PluginClass")).CallStatic<string>("GetCallStack");
 		}
 
 		/*
