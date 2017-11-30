@@ -1,8 +1,8 @@
 ﻿
 /*********************
  * Mononity
- * Ver : 1.4 
- * Date : 2017.11.25
+ * Ver : 1.5 
+ * Date : 2017.11.30
 *********************/
 
 using System;
@@ -18,38 +18,17 @@ namespace Mononity
 		private AndroidJavaObject activityContext = null;
 		public MononityAndroid ()
 		{
-			mononityInstance = new AndroidJavaClass("com.test.unityplugin.PluginClass");
-			/*
-			using (AndroidJavaClass activityClass = new AndroidJavaClass ("com.unity3d.player.UnityPlayer")){
-				activityContext = activityClass.GetStatic<AndroidJavaObject> ("currentActivity");
-				if (activityContext == null) {
-					//
-				}
-
-				mononityInstance = new AndroidJavaClass("com.test.unityplugin.PluginClass");
-			}
-			*/
+			mononityInstance = new AndroidJavaClass("com.mononity.haribo.MainActivity");
 		}
 
 		public string returnData(){
-			//string tempdata = mononityInstance.CallStatic<string> ("tempmsg");
-			//string tempdata = (new AndroidJavaClass("com.test.unityplugin.PluginClass")).CallStatic<string>("GetCallStack");
-			//return mononityInstance.CallStatic<string> ("tempmsg");
 			if (AndroidJNI.AttachCurrentThread () == 0) {
-				
-				string getmemoryallocated = mononityInstance.CallStatic<string> ("GetMemoryAllocated");
-				string Androidcallstack = mononityInstance.CallStatic<string> ("GetCallStack");
-				string getcpuusage = mononityInstance.CallStatic<string> ("GetCpuUsagePercentage");
-				string getcurrentthreadname = mononityInstance.CallStatic<string> ("getCurrentThreadName");
+				string androiddata = mononityInstance.CallStatic<string>("GetProfileData");
 				string Unitycallstack = System.Environment.StackTrace;
 
-				string log = "GetMemoryAllocated : " + getmemoryallocated + "\n\n" +
-				             "CallUnityStack : " + Unitycallstack + "\n\n" +
-				             "CallAndroidStack : " + Androidcallstack + "\n\n" +
-				             "GetcpuUsage : " + getcpuusage + "\n\n" +
-				             "GetcurrentThreadname : " + getcurrentthreadname + "\n\n";
 				AndroidJNI.DetachCurrentThread ();
-				return log;
+
+				return androiddata;
 			} else {
 				return "NULL";
 			}

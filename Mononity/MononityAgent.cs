@@ -1,8 +1,8 @@
 ﻿
 /*********************
  * Mononity
- * Ver : 1.4 
- * Date : 2017.11.25
+ * Ver : 1.5 
+ * Date : 2017.11.30
 *********************/
 
 using System;
@@ -10,6 +10,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 using StreamWriter = System.IO.StreamWriter;
 
@@ -27,6 +28,9 @@ namespace Mononity
 
 		public static Queue profilingData;
 
+		public string apiKey;
+		public static string staticKey;
+
 		public void Update()
 		{
 			deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
@@ -40,7 +44,8 @@ namespace Mononity
 
 		public void OnApplicationPause()
 		{
-			SaveData();
+			SaveData ();
+			GetStackData ();
 			mononityTimer.Dispose ();
 			threadActivate = false;
 		}
@@ -96,9 +101,10 @@ namespace Mononity
 			int startdelay = UnityEngine.Random.Range (10, 100) * 100;
 			profilingData = new Queue ();
 			mononityAndroid = new MononityAndroid ();
+			staticKey = apiKey;
 			UnityEngine.Debug.Log ("MonoAgent Start");
 
-			System.IO.File.WriteAllText(Application.persistentDataPath + "/Start.txt", "Delay : " + startdelay);
+			//System.IO.File.WriteAllText(Application.persistentDataPath + "/Start.txt", "Delay : " + startdelay);
 
 			if (!threadActivate) {
 				mononityTimer = new Timer (GetData, "", startdelay, 5000);
@@ -110,31 +116,55 @@ namespace Mononity
 
 		public static void GetData (object data){
 			float fps = 1.0f / deltaTime;
-			string filedata = mononityAndroid.returnData ();
-			filedata += "fps : " + fps + "\n\r";
-			string filepath = Application.persistentDataPath + "/ProfileData" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
-			profilingData.Enqueue (filedata);
-			System.IO.File.WriteAllText(filepath, profilingData.Count + "  ************\n" + filedata);
+			string stackDump = System.Environment.StackTrace;
+			string currentScene = SceneManager.GetActiveScene ().name;
+			string androidData = mononityAndroid.returnData ();
+			MononityDataController dataController = new MononityDataController (staticKey, stackDump, fps.ToString (), currentScene, androidData);
+			string currentProfilingData = dataController.returnJson ();
+			profilingData.Enqueue (currentProfilingData);
 
-			if (profilingData.Count > 5) {
+			//System.IO.File.WriteAllText(filepath, currentProfilingData);
+
+			/*
+			string filepath = Application.persistentDataPath + "/ProfileData" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
+			StackTrace stackData = new StackTrace(true);
+
+			System.IO.File.WriteAllText(filepath, stackData.ToString());
+			*/
+	
+			if (profilingData.Count > 100) {
 				profilingData.Dequeue ();
 			}
 		}
 
 		public static void SaveData(){
 			int idx = 1;
-			string fulldata = "";
+			string fulldata = "[";
 
 			while (profilingData.Count > 0) {
-				fulldata += idx + "**********************\n";
 				fulldata += profilingData.Peek ();
+				fulldata += ", ";
 				profilingData.Dequeue ();
 				idx++;
 			}
+			fulldata += "]";
 				
 			System.IO.File.WriteAllText(Application.persistentDataPath + "/ProfileDump.txt", fulldata);
 		}
 
+		public static void GetStackData(){
+			string data = "";
+			data += "StackTraceUtility : " + StackTraceUtility.ExtractStackTrace ();
+			/*
+			data += "Current Thread : " + Thread.CurrentThread.Name + "\r\n";
+			ProcessThreadCollection currentThreads = Process.GetCurrentProcess ().Threads;
+			data += "Thread Count : " + currentThreads.Count + "\r\n";
+			foreach (ProcessThread thread in currentThreads) {
+				data += thread.Id + "\r\n";
+			}
+			*/
+			System.IO.File.WriteAllText(Application.persistentDataPath + "/StackDump.txt", data);
+		}
 		/*
 		public static void GetFullStack (object data){
 			string filepath = Application.persistentDataPath + "/temp" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".txt";
